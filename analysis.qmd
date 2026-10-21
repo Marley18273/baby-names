@@ -26,14 +26,25 @@ marley_by_year <- expand_grid(
 ) |>
   left_join(marley, by = c("year", "sex"))
 
+marley_peaks <- marley |>
+  group_by(sex) |>
+  slice_max(count, n = 1, with_ties = TRUE)
+
 ggplot(marley_by_year, aes(x = year, y = count, color = sex, group = sex)) +
   geom_line(na.rm = TRUE) +
   geom_point(na.rm = TRUE) +
+  geom_text(
+    data = marley_peaks,
+    aes(label = paste0(year, " peak: ", count)),
+    vjust = -0.8,
+    show.legend = FALSE
+  ) +
   scale_color_manual(
     name = "Sex",
     values = c("M" = "#2878B5", "F" = "#D64F8B"),
     labels = c("M" = "Male", "F" = "Female")
   ) +
+  scale_y_continuous(expand = expansion(mult = c(0.05, 0.12))) +
   labs(
     title = "Popularity of the Name Marley Over Time",
     subtitle = "Gaps indicate years without a published Marley count; they are not zeroes.",
@@ -41,3 +52,28 @@ ggplot(marley_by_year, aes(x = year, y = count, color = sex, group = sex)) +
     y = "Number of babies named Marley"
   )
 ```
+
+```{r}
+recent_year <- max(baby_names$year)
+
+marley_recent <- marley |>
+  filter(year == recent_year) |>
+  select(sex, recent_year = year, recent_count = count)
+
+peak_counts <- marley_peaks |>
+  select(sex, peak_year = year, peak_count = count)
+
+peak_counts |>
+  left_join(marley_recent, by = "sex") |>
+  mutate(sex = if_else(sex == "F", "Female", "Male")) |>
+  select(
+    Sex = sex,
+    `Peak Year` = peak_year,
+    `Peak Count` = peak_count,
+    `Recent Year` = recent_year,
+    `Recent Count` = recent_count
+  ) |>
+  knitr::kable()
+```
+
+The name Marley reached its peak popularity for both sexes in 2008, with 2,359 female babies and 291 male babies. Across all recorded years, the name has been far more common for females than for males. Following the 2008 peak, annual counts for both sexes have declined substantially, falling to 950 for females and 131 for males by 2025. Note that years where Marley is absent from the dataset indicate unpublished counts (fewer than 5 occurrences) rather than zero occurrences.
