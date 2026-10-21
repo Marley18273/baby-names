@@ -1,0 +1,43 @@
+---
+title: "Popularity of the Name Marley Over Time"
+format: html
+---
+
+```{r}
+library(tidyverse)
+
+baby_names <- read_csv(
+  "ssa-baby-names.csv",
+  col_types = cols(
+    year = col_integer(),
+    name = col_character(),
+    sex = col_character(),
+    count = col_integer()
+  )
+)
+
+marley <- baby_names |>
+  filter(name == "Marley", sex %in% c("M", "F")) |>
+  select(year, sex, count)
+
+marley_by_year <- expand_grid(
+  year = seq(min(baby_names$year), max(baby_names$year)),
+  sex = c("M", "F")
+) |>
+  left_join(marley, by = c("year", "sex"))
+
+ggplot(marley_by_year, aes(x = year, y = count, color = sex, group = sex)) +
+  geom_line(na.rm = TRUE) +
+  geom_point(na.rm = TRUE) +
+  scale_color_manual(
+    name = "Sex",
+    values = c("M" = "#2878B5", "F" = "#D64F8B"),
+    labels = c("M" = "Male", "F" = "Female")
+  ) +
+  labs(
+    title = "Popularity of the Name Marley Over Time",
+    subtitle = "Gaps indicate years without a published Marley count; they are not zeroes.",
+    x = "Year",
+    y = "Number of babies named Marley"
+  )
+```
